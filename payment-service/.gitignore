@@ -41,8 +41,6 @@ Desktop.ini
 .idea/
 
 # Eclipse specific files
-.project
-.classpath
 .settings/
 
 # Log files
@@ -52,6 +50,3 @@ Desktop.ini
 # Local development files (like database files, etc.)
 *.h2.db
 *.sqlite
-
-# Application property files containing secrets
-/src/main/resources/application.properties
