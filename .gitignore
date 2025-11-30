@@ -23,4 +23,11 @@
 hs_err_pid*
 replay_pid*
 
+<<<<<<< HEAD
 */src/main/resources/application.properties
+.idea/
+.vscode/
+.DS_Store
+=======
+*/src/main/resources/application.properties
+>>>>>>> main

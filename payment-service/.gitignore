@@ -31,3 +31,22 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# OS-specific files (Mac, Windows, Linux)
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IntelliJ IDEA specific files
+.idea/
+
+# Eclipse specific files
+.settings/
+
+# Log files
+*.log
+*.out
+
+# Local development files (like database files, etc.)
+*.h2.db
+*.sqlite
