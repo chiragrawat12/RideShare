@@ -18,14 +18,24 @@ public class PaymentServiceApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("Listing columns from table...");
+        System.out.println("Checking & creating payments table...");
 
-        jdbcTemplate.query("SHOW CREATE TABLE payments", rs -> {
-            System.out.println(rs.getString(2));
-        });
+        String sql = """
+                CREATE TABLE IF NOT EXISTS payments (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    user_id INT NOT NULL,
+                    bookingId INT NOT NULL,
+                    amount DECIMAL(8,2) NOT NULL,
+                    paymentMethod VARCHAR(25) NOT NULL,
+                    paymentDate DATETIME NOT NULL,
+                    status VARCHAR(25) NOT NULL,
+                    stripe_payment_intent_id VARCHAR(100) DEFAULT NULL,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+                """;
 
-//        jdbcTemplate.query(sql, new Object[]{tableName}, rs -> {
-//            System.out.println("Column: " + rs.getString("COLUMN_NAME"));
-//        });
+        jdbcTemplate.execute(sql);
+
+        System.out.println("Payments table created or already exists.");
     }
 }

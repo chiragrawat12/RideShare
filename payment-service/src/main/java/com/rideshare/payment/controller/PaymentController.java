@@ -1,6 +1,7 @@
 package com.rideshare.payment.controller;
 
 import com.rideshare.payment.model.Payment;
+import com.rideshare.payment.observer.PaymentStatusSubject;
 import com.rideshare.payment.service.PaymentService;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,9 +12,11 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService service;
+    private final PaymentStatusSubject subject;
 
-    public PaymentController(PaymentService service) {
+    public PaymentController(PaymentService service, PaymentStatusSubject subject) {
         this.service = service;
+        this.subject = subject;
     }
 
     @PostMapping("/pay")
@@ -30,4 +33,15 @@ public class PaymentController {
     public Payment getPayment(@PathVariable int id) {
         return service.getPayment(id);
     }
+
+    @PostMapping("/update-status")
+    public String updateStatus(@RequestParam int paymentId, @RequestParam String status) {
+
+        service.updatePaymentStatus(paymentId, status);
+
+        subject.notifyObservers(paymentId, status);
+
+        return "Payment " + paymentId + " updated to: " + status;
+    }
+
 }

@@ -3,6 +3,7 @@ package com.rideshare.payment.service;
 import com.rideshare.payment.model.Payment;
 import com.rideshare.payment.paymentgateway.PaymentProcessor;
 import com.rideshare.payment.repository.PaymentRepository;
+//import com.stripe.model.PaymentIntent;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -25,14 +26,12 @@ public class PaymentService {
         try {
             long amountInCents = (long) (payment.getAmount() * 100);
 
-            // 1. Create Stripe PaymentIntent
             String clientSecret = stripeProcessor.createPaymentIntent(
                     amountInCents,
                     "eur",
                     "Ride payment for booking " + payment.getBookingId()
             );
 
-            // 2. Save in database
             payment.setPaymentDate(LocalDateTime.now());
             payment.setStatus("PENDING");
             payment.setPaymentMethod("STRIPE");
@@ -46,6 +45,10 @@ public class PaymentService {
             e.printStackTrace();
             return "Error processing payment: " + e.getMessage();
         }
+    }
+
+    public void updatePaymentStatus(int id, String status) {
+        repo.updateStatus(id, status);
     }
 
     public List<Payment> getAllPayments() {

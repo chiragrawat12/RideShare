@@ -31,6 +31,11 @@ public class PaymentRepository {
         );
     }
 
+    public void updateStatus(int id, String status) {
+        String sql = "UPDATE payments SET status = ? WHERE id = ?";
+        jdbc.update(sql, status, id);
+    }
+
     public List<Payment> getAllPayments() {
         String sql = "SELECT * FROM payments";
 
