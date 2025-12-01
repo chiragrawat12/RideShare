@@ -2,11 +2,11 @@ package com.rideshare.userservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+//import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EntityScan(basePackages = "com.rideshare.userservice.model")
+//@EntityScan(basePackages = "com.rideshare.userservice.model")
 @EnableJpaRepositories(basePackages = "com.rideshare.userservice.repository")
 
 //Main Method
