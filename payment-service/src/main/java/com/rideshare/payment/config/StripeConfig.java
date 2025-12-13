@@ -1,7 +1,10 @@
 package com.rideshare.payment.config;
 
+import com.rideshare.payment.observer.EmailNotificationObserver;
 import com.rideshare.payment.observer.PaymentStatusSubject;
 import com.rideshare.payment.observer.RideStatusUpdateObserver;
+import com.rideshare.payment.observer.EmailNotificationObserver;
+import com.rideshare.payment.observer.PaymentNotificationObserver;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,11 +23,12 @@ public class StripeConfig {
     }
 
     @Bean
-    public PaymentStatusSubject paymentStatusSubject() {
+    public PaymentStatusSubject paymentStatusSubject(PaymentNotificationObserver notificationObserver, RideStatusUpdateObserver rideStatusObserver, EmailNotificationObserver emailObserver) {
         PaymentStatusSubject subject = new PaymentStatusSubject();
 
-//        subject.addObserver(new EmailNotificationObserver());
-        subject.addObserver(new RideStatusUpdateObserver());
+        subject.addObserver(notificationObserver);
+        subject.addObserver(rideStatusObserver);
+        subject.addObserver(emailObserver);
 
         return subject;
     }

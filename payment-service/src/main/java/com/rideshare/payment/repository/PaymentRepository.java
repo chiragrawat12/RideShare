@@ -20,7 +20,7 @@ public class PaymentRepository {
         String sql = "INSERT INTO payments(user_id, bookingId, amount, paymentMethod, paymentDate, status, stripe_payment_intent_id) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        return jdbc.update(sql,
+        jdbc.update(sql,
                 payment.getUserId(),
                 payment.getBookingId(),
                 payment.getAmount(),
@@ -29,6 +29,13 @@ public class PaymentRepository {
                 payment.getStatus(),
                 payment.getStripePaymentIntentId()
         );
+
+        Integer paymentId = jdbc.queryForObject(
+                "SELECT LAST_INSERT_ID()",
+                Integer.class
+        );
+
+        return paymentId;
     }
 
     public void updateStatus(int id, String status) {
