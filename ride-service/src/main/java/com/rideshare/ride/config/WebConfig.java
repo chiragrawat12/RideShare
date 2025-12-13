@@ -1,17 +1,13 @@
 package com.rideshare.ride.config;
 
-import com.rideshare.ride.interceptor.AuthenticationInterceptor;
-import com.rideshare.ride.interceptor.LoggingInterceptor;
-import com.rideshare.ride.interceptor.ValidationInterceptor;
+import com.rideshare.ride.interceptor.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Web Configuration
- * Registers all interceptors in the correct order
- * Order: Authentication → Validation → Logging
+ * Web MVC Configuration with Dispatcher-based Interceptor Chain
  */
 @Component
 public class WebConfig implements WebMvcConfigurer {
@@ -25,26 +21,30 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private LoggingInterceptor loggingInterceptor;
 
+    @Autowired
+    private InterceptorDispatcher interceptorDispatcher;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        System.out.println("🔧 Registering Interceptors...");
 
-        // 1. Authentication Interceptor (first - checks user exists)
-        registry.addInterceptor(authenticationInterceptor)
-                .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/v1/health");
-        System.out.println("✓ AuthenticationInterceptor registered");
+        System.out.println("\n" + "=".repeat(80));
+        System.out.println("INITIALIZING INTERCEPTOR DISPATCHER CHAIN");
+        System.out.println("=".repeat(80));
 
-        // 2. Validation Interceptor (second - checks data format)
-        registry.addInterceptor(validationInterceptor)
+        // Register interceptors with dispatcher in order
+        interceptorDispatcher.registerInterceptor(authenticationInterceptor);
+        interceptorDispatcher.registerInterceptor(validationInterceptor);
+        interceptorDispatcher.registerInterceptor(loggingInterceptor);
+
+        System.out.println("\n✓ Total Interceptors Registered: " + interceptorDispatcher.getInterceptorCount());
+        System.out.println("✓ Execution Order:");
+        System.out.println("  1. AuthenticationInterceptor (check user)");
+        System.out.println("  2. ValidationInterceptor (check data)");
+        System.out.println("  3. LoggingInterceptor (record timing)");
+        System.out.println("=".repeat(80) + "\n");
+
+        // Register all interceptors with Spring for actual HTTP handling
+        registry.addInterceptor(new DispatcherBasedInterceptor(interceptorDispatcher))
                 .addPathPatterns("/api/**");
-        System.out.println("✓ ValidationInterceptor registered");
-
-        // 3. Logging Interceptor (third - records request/response)
-        registry.addInterceptor(loggingInterceptor)
-                .addPathPatterns("/api/**");
-        System.out.println("✓ LoggingInterceptor registered");
-
-        System.out.println("✅ All interceptors configured successfully!\n");
     }
 }

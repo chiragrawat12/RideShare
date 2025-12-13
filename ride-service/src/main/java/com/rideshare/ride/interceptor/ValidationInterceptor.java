@@ -1,56 +1,46 @@
 package com.rideshare.ride.interceptor;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 
-/**
- * Interceptor Pattern - Validation
- * Validates request data before reaching controller
- * Checks: Content-Type, required parameters
- */
 @Component
-public class ValidationInterceptor implements HandlerInterceptor {
+public class ValidationInterceptor implements HandlerInterceptorCallback {
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws Exception {
+    public boolean preHandle(HttpServletRequest request,
+                             HttpServletResponse response,
+                             Object handler) throws Exception {
 
         String method = request.getMethod();
         String path = request.getRequestURI();
 
-        // Validate Content-Type for POST/PUT requests
+        if (path.endsWith("/undo")) {
+            return true;
+        }
+
         if (method.equals("POST") || method.equals("PUT")) {
-            String contentType = request.getContentType();
+            String contentType = request.getHeader("Content-Type");
 
             if (contentType == null || !contentType.contains("application/json")) {
-                System.out.println("REJECTED: Invalid Content-Type: " + contentType);
-                System.out.println("   Expected: application/json");
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\": \"Content-Type must be application/json\", \"status\": 400}");
+                System.out.println("VALIDATION FAILED: Content-Type must be application/json");
+                sendErrorResponse(response, HttpStatus.BAD_REQUEST, "Content-Type must be application/json");
                 return false;
             }
 
-            System.out.println("✓ Validation: Content-Type = application/json");
+            System.out.println("✓ Validation: Content-Type = " + contentType);
         }
 
-        // Validate search parameters
         if (path.contains("/search")) {
             String source = request.getParameter("source");
             String destination = request.getParameter("destination");
 
-            if (source == null || source.trim().isEmpty() ||
-                    destination == null || destination.trim().isEmpty()) {
+            if (source == null || source.isEmpty() ||
+                    destination == null || destination.isEmpty()) {
 
-                System.out.println("REJECTED: Missing required parameters for /search");
-                System.out.println("   Required: source, destination");
-                System.out.println("   Provided: source=" + source + ", destination=" + destination);
-
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\": \"Missing required parameters: source and destination\", \"status\": 400}");
+                System.out.println("VALIDATION FAILED: Search requires source and destination parameters");
+                sendErrorResponse(response, HttpStatus.BAD_REQUEST, "source and destination required");
                 return false;
             }
 
@@ -58,5 +48,35 @@ public class ValidationInterceptor implements HandlerInterceptor {
         }
 
         return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request,
+                           HttpServletResponse response,
+                           Object handler,
+                           Exception exception) throws Exception {
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request,
+                                HttpServletResponse response,
+                                Object handler,
+                                Exception exception) throws Exception {
+        if (exception != null) {
+            System.out.println("Validation - Exception occurred: " + exception.getMessage());
+        }
+    }
+
+    @Override
+    public String getInterceptorName() {
+        return "ValidationInterceptor";
+    }
+
+    private void sendErrorResponse(HttpServletResponse response,
+                                   HttpStatus status,
+                                   String message) throws Exception {
+        response.setStatus(status.value());
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\": \"" + message + "\", \"status\": " + status.value() + "}");
     }
 }
