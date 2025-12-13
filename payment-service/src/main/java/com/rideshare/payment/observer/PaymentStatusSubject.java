@@ -15,9 +15,9 @@ public class PaymentStatusSubject {
         observers.remove(observer);
     }
 
-    public void notifyObservers(int paymentId, String status) {
+    public void notifyObservers(int paymentId, int userId, String status) {
         for (PaymentObserver observer : observers) {
-            observer.onPaymentStatusChanged(paymentId, status);
+            observer.onPaymentStatusChanged(paymentId, userId, status);
         }
     }
 }

@@ -12,11 +12,9 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService service;
-    private final PaymentStatusSubject subject;
 
-    public PaymentController(PaymentService service, PaymentStatusSubject subject) {
+    public PaymentController(PaymentService service) {
         this.service = service;
-        this.subject = subject;
     }
 
     @PostMapping("/pay")
@@ -33,15 +31,4 @@ public class PaymentController {
     public Payment getPayment(@PathVariable int id) {
         return service.getPayment(id);
     }
-
-    @PostMapping("/update-status")
-    public String updateStatus(@RequestParam int paymentId, @RequestParam String status) {
-
-        service.updatePaymentStatus(paymentId, status);
-
-        subject.notifyObservers(paymentId, status);
-
-        return "Payment " + paymentId + " updated to: " + status;
-    }
-
 }

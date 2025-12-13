@@ -37,5 +37,30 @@ public class PaymentServiceApplication implements CommandLineRunner {
         jdbcTemplate.execute(sql);
 
         System.out.println("Payments table created or already exists.");
+
+
+        System.out.println("Checking & creating notify table...");
+
+        String notifyTableSql = """
+                CREATE TABLE IF NOT EXISTS notify (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    user_id INT NOT NULL,
+                    payment_id INT NOT NULL,
+                    status VARCHAR(25) NOT NULL,
+                    message VARCHAR(255),
+                    notified_at DATETIME NOT NULL,
+                    PRIMARY KEY (id),
+                    CONSTRAINT fk_notify_payment
+                        FOREIGN KEY (payment_id)
+                        REFERENCES payments(id)
+                        ON DELETE CASCADE
+                ) ENGINE=InnoDB
+                DEFAULT CHARSET=utf8mb4
+                COLLATE=utf8mb4_0900_ai_ci;
+                """;
+
+        jdbcTemplate.execute(notifyTableSql);
+
+        System.out.println("Notify table created or already exists.");
     }
 }

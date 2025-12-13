@@ -1,14 +1,14 @@
 package com.rideshare.payment.service;
 
 import com.rideshare.payment.model.Payment;
+import com.rideshare.payment.observer.PaymentStatusSubject;
 import com.rideshare.payment.paymentgateway.PaymentProcessor;
 import com.rideshare.payment.repository.PaymentRepository;
-//import com.stripe.model.PaymentIntent;
+import com.rideshare.payment.validation.PaymentValidator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-
 import java.util.List;
 
 @Service
@@ -16,39 +16,51 @@ public class PaymentService {
 
     private final PaymentRepository repo;
     private final PaymentProcessor stripeProcessor;
+    private final PaymentStatusSubject subject;
+    private final PaymentValidator validator;
 
-    public PaymentService(PaymentRepository repo, @Qualifier("stripeProcessor") PaymentProcessor stripeProcessor) {
+    public PaymentService(PaymentRepository repo, @Qualifier("stripeProcessor") PaymentProcessor stripeProcessor,
+                          PaymentStatusSubject subject, PaymentValidator validator) {
         this.repo = repo;
         this.stripeProcessor = stripeProcessor;
+        this.subject = subject;
+        this.validator = validator;
     }
 
     public String processPayment(Payment payment) {
+
+        validator.validate(payment);
+
         try {
             long amountInCents = (long) (payment.getAmount() * 100);
 
-            String clientSecret = stripeProcessor.createPaymentIntent(
-                    amountInCents,
-                    "eur",
-                    "Ride payment for booking " + payment.getBookingId()
-            );
+            String intentId = stripeProcessor.createPaymentIntent(amountInCents, "eur",
+                    "Ride payment for booking " + payment.getBookingId());
 
             payment.setPaymentDate(LocalDateTime.now());
-            payment.setStatus("PENDING");
             payment.setPaymentMethod("STRIPE");
-            payment.setStripePaymentIntentId(clientSecret);
+            payment.setStatus("SUCCESS");
+            payment.setStripePaymentIntentId(intentId);
 
-            repo.createPayment(payment);
+            int payment_id = repo.createPayment(payment);
 
-            return clientSecret;
+            subject.notifyObservers(payment_id, payment.getUserId(), "SUCCESS");
+
+            return "Payment successful";
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return "Error processing payment: " + e.getMessage();
-        }
-    }
 
-    public void updatePaymentStatus(int id, String status) {
-        repo.updateStatus(id, status);
+            payment.setPaymentDate(LocalDateTime.now());
+            payment.setPaymentMethod("STRIPE");
+            payment.setStatus("FAILED");
+            payment.setStripePaymentIntentId(null);
+
+            int payment_id = repo.createPayment(payment);
+
+            subject.notifyObservers(payment_id, payment.getUserId(), "FAILED");
+
+            return "Payment failed: " + e.getMessage();
+        }
     }
 
     public List<Payment> getAllPayments() {
