@@ -156,22 +156,36 @@ public class RideService {
         commandInvoker.undoLastCommand();
     }
 
-    public List<Object> searchAvailableRidesWithPremium(String source, String destination, boolean isPremium) {
-        // Get regular rides
-        List<Ride> availableRides = rideRepository.findAvailableRides(source, destination);
+        public List<Object> searchAvailableRidesWithPremium(String source, String destination, boolean isPremium) {
+            List<Ride> availableRides = rideRepository.findAvailableRides(source, destination);
 
-        // If premium, decorate them. If not, convert to DTO
-        if (isPremium) {
-            System.out.println("\n💎 PREMIUM SEARCH MODE ACTIVATED");
+            if (!isPremium) {
+                return availableRides.stream()
+                        .map(this::convertToDTO)
+                        .collect(Collectors.toList());
+            }
+
+            // Apply decorator chain
+            System.out.println("\nDECORATOR CHAIN - APPLYING DECORATORS");
+            System.out.println("=".repeat(80));
+
             return availableRides.stream()
-                    .map(ride -> new PremiumRideDecorator(ride))
-                    .collect(Collectors.toList());
-        } else {
-            // Regular search
-            return availableRides.stream()
-                    .map(this::convertToDTO)
+                    .map(ride -> {
+                        // Create decorator chain
+                        RideDecorator decorator = new PremiumRideDecorator(ride);
+                        // Can chain more decorators here if needed:
+                        // decorator.chain(new VIPRideDecorator(ride));
+
+                        System.out.println("Decorated ride #" + ride.getId());
+
+                        // Convert to DTO with decorated values
+                        RideResponseDTO dto = convertToDTO(ride);
+                        dto.setPremiumPrice(decorator.getPrice());
+                        dto.setBookableSeats(decorator.getBookableSeats());
+                        dto.setDescription(decorator.getDescription());
+
+                        return dto;
+                    })
                     .collect(Collectors.toList());
         }
-    }
-
 }

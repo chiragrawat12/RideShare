@@ -5,24 +5,42 @@ import java.math.BigDecimal;
 
 /**
  * Abstract Decorator for Ride
- * Base class for ride decorators
+ * Base class for ride decorators implementing Decorator Pattern
  */
-public abstract class RideDecorator {
+public abstract class RideDecorator implements DecoratorChain {
 
     protected Ride ride;
+    protected RideDecorator nextDecorator;
 
     public RideDecorator(Ride ride) {
         this.ride = ride;
+        this.nextDecorator = null;
     }
 
-    // Methods to decorate
+    /**
+     * Chain another decorator
+     */
+    @Override
+    public RideDecorator chain(RideDecorator decorator) {
+        this.nextDecorator = decorator;
+        System.out.println("Chained decorator: " + this.getClass().getSimpleName() + " → " + decorator.getClass().getSimpleName());
+        return decorator;
+    }
+
+    /**
+     * Get next decorator in chain
+     */
+    public RideDecorator getNextDecorator() {
+        return nextDecorator;
+    }
+
+    // Abstract methods to override
     public abstract BigDecimal getPrice();
-
     public abstract Integer getBookableSeats();
-
     public abstract String getDescription();
+    public abstract String getDecoratorName();
 
-    // Pass-through methods (not decorated)
+    // Pass-through methods (delegate to wrapped ride)
     public Long getId() {
         return ride.getId();
     }

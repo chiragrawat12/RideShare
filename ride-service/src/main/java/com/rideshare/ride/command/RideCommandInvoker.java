@@ -23,7 +23,7 @@ public class RideCommandInvoker {
             commandHistory.push(command);
             System.out.println("✓ Command stored in history (Total: " + commandHistory.size() + " commands)");
         } catch (Exception e) {
-            System.out.println("❌ Command execution failed: " + e.getMessage());
+            System.out.println("Command execution failed: " + e.getMessage());
             throw new RuntimeException("Command execution failed", e);
         }
     }
@@ -39,7 +39,7 @@ public class RideCommandInvoker {
                 command.undo();
                 System.out.println("✓ Undo successful (Remaining: " + commandHistory.size() + " commands)");
             } catch (Exception e) {
-                System.out.println("❌ Undo failed: " + e.getMessage());
+                System.out.println("Undo failed: " + e.getMessage());
                 throw new RuntimeException("Undo failed", e);
             }
         } else {

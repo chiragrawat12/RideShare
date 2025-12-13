@@ -1,29 +1,24 @@
 package com.rideshare.ride.interceptor;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * Interceptor Pattern - Logging
- * Logs request details and response time
- * Helps with debugging and performance monitoring
- */
 @Component
-public class LoggingInterceptor implements HandlerInterceptor {
+public class LoggingInterceptor implements HandlerInterceptorCallback {
+
+    private static final String START_TIME_ATTR = "startTime";
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws Exception {
+    public boolean preHandle(HttpServletRequest request,
+                             HttpServletResponse response,
+                             Object handler) throws Exception {
 
-        // Store request start time
         long startTime = System.currentTimeMillis();
-        request.setAttribute("startTime", startTime);
+        request.setAttribute(START_TIME_ATTR, startTime);
 
-        // Log query parameters if present
         String queryString = request.getQueryString();
-        if (queryString != null && !queryString.isEmpty()) {
+        if (queryString != null) {
             System.out.println("Query Parameters: " + queryString);
         }
 
@@ -31,19 +26,32 @@ public class LoggingInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
-                                Object handler, Exception ex) throws Exception {
+    public void postHandle(HttpServletRequest request,
+                           HttpServletResponse response,
+                           Object handler,
+                           Exception exception) throws Exception {
+        System.out.println("Response Status: " + response.getStatus());
+    }
 
-        long startTime = (long) request.getAttribute("startTime");
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
+    @Override
+    public void afterCompletion(HttpServletRequest request,
+                                HttpServletResponse response,
+                                Object handler,
+                                Exception exception) throws Exception {
 
+        long startTime = (long) request.getAttribute(START_TIME_ATTR);
+        long duration = System.currentTimeMillis() - startTime;
+
+        System.out.println("Response: " + response.getStatus());
         System.out.println("Response Time: " + duration + "ms");
-        System.out.println("=".repeat(80) + "\n");
 
-        // Log exceptions if any
-        if (ex != null) {
-            System.out.println("Exception occurred: " + ex.getMessage());
+        if (exception != null) {
+            System.out.println("Exception: " + exception.getClass().getSimpleName());
         }
+    }
+
+    @Override
+    public String getInterceptorName() {
+        return "LoggingInterceptor";
     }
 }

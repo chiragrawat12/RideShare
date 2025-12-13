@@ -1,78 +1,72 @@
 package com.rideshare.ride.interceptor;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
+import org.springframework.http.HttpStatus;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-
 @Component
-public class AuthenticationInterceptor implements HandlerInterceptor {
-
-    private static final String USER_ID_HEADER = "X-User-Id";
+public class AuthenticationInterceptor implements HandlerInterceptorCallback {
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws Exception {
+    public boolean preHandle(HttpServletRequest request,
+                             HttpServletResponse response,
+                             Object handler) throws Exception {
 
-        String requestPath = request.getRequestURI();
-        String method = request.getMethod();
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        System.out.println("\n" + "=".repeat(72));
+        System.out.println("[" + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "] " +
+                request.getMethod() + " " + request.getRequestURI());
+        System.out.println("=".repeat(72));
 
-        // Log incoming request
-        System.out.println("\n" + "=".repeat(80));
-        System.out.println("[" + timestamp + "] " + method + " " + requestPath);
-        System.out.println("=".repeat(80));
+        String userIdHeader = request.getHeader("X-User-Id");
 
-        // Skip authentication for health checks
-        if (requestPath.contains("/health")) {
-            System.out.println("ℹHealth check - skipping authentication");
-            return true;
-        }
-
-        // Check X-User-Id header (required for all ride operations)
-        String userId = request.getHeader(USER_ID_HEADER);
-
-        if (userId == null || userId.trim().isEmpty()) {
+        if (userIdHeader == null || userIdHeader.isEmpty()) {
             System.out.println("REJECTED: Missing or empty X-User-Id header");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Missing X-User-Id header\", \"status\": 401}");
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Missing X-User-Id header");
             return false;
         }
 
-        // Validate userId is numeric
         try {
-            Long.parseLong(userId);
+            Long userId = Long.parseLong(userIdHeader);
+            System.out.println("✓ Authentication passed - User ID: " + userId);
+            request.setAttribute("userId", userId);
+            return true;
         } catch (NumberFormatException e) {
-            System.out.println("REJECTED: X-User-Id is not numeric: " + userId);
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"X-User-Id must be numeric\", \"status\": 400}");
+            System.out.println("REJECTED: X-User-Id is not a number");
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "X-User-Id must be a number");
             return false;
         }
-
-        // Authentication successful
-        System.out.println("✓ Authentication passed - User ID: " + userId);
-
-        // Store userId in request for later use
-        request.setAttribute("userId", userId);
-
-        return true;
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
-                                Object handler, Exception ex) throws Exception {
+    public void postHandle(HttpServletRequest request,
+                           HttpServletResponse response,
+                           Object handler,
+                           Exception exception) throws Exception {
+    }
 
-        int statusCode = response.getStatus();
-        String statusEmoji = statusCode >= 400 ? "x" : "✓";
-        String statusText = statusCode >= 200 && statusCode < 300 ? "Success" :
-                statusCode >= 300 && statusCode < 400 ? "Redirect" :
-                        statusCode >= 400 && statusCode < 500 ? "Client Error" : "Server Error";
+    @Override
+    public void afterCompletion(HttpServletRequest request,
+                                HttpServletResponse response,
+                                Object handler,
+                                Exception exception) throws Exception {
+        if (exception != null) {
+            System.out.println("Authentication - Exception occurred: " + exception.getMessage());
+        }
+    }
 
-        System.out.println(statusEmoji + " Response: " + statusCode + " (" + statusText + ")");
+    @Override
+    public String getInterceptorName() {
+        return "AuthenticationInterceptor";
+    }
+
+    private void sendErrorResponse(HttpServletResponse response,
+                                   HttpStatus status,
+                                   String message) throws Exception {
+        response.setStatus(status.value());
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\": \"" + message + "\", \"status\": " + status.value() + "}");
     }
 }
