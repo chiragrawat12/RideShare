@@ -1,12 +1,13 @@
 package com.rideshare.userservice.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Passenger {
 
     @Id
@@ -16,5 +17,6 @@ public class Passenger {
     @OneToOne
     private User user;
 
-    private String preferredPaymentMethod;
+    private String preferredPaymentMethod; // Add this
+
 }

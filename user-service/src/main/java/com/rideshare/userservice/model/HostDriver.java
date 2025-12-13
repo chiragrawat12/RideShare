@@ -1,12 +1,13 @@
 package com.rideshare.userservice.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class HostDriver {
 
     @Id
@@ -16,6 +17,7 @@ public class HostDriver {
     @OneToOne
     private User user;
 
-    private String licenseNumber;
-    private String vehicleDetails;
+    private String licenseNumber;  // Already there?
+    private String vehicleDetails; // Add this
+
 }
